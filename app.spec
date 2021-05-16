@@ -4,9 +4,9 @@
 block_cipher = None
 
 
-a = Analysis(['main.py'],
+a = Analysis(['app.py'],
              binaries=[],
-             datas=[('data', 'data')],
+             datas=[('resources', 'resources')],
              hiddenimports=[],
              hookspath=[],
              runtime_hooks=[],
@@ -23,11 +23,11 @@ exe = EXE(pyz,
           a.zipfiles,
           a.datas,
           [],
-          name='main',
+          name='WorkBreakTimer',
           debug=False,
           bootloader_ignore_signals=False,
           strip=False,
           upx=True,
           upx_exclude=[],
           runtime_tmpdir=None,
-          console=True )
+          console=False )
