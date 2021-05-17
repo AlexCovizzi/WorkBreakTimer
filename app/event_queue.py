@@ -20,7 +20,7 @@ class EventQueue:
     def clear_until(self, epoch_seconds):
         self._queue = [item for item in self._queue if item['at'] < epoch_seconds]
 
-    def iterate_until(self, epoch_seconds):
+    def iterate_from(self, epoch_seconds):
         return [item for item in self._queue if item['at'] >= epoch_seconds]
 
     def last(self):

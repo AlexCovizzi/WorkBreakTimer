@@ -27,22 +27,25 @@ class EventProcessor:
     # more than min_break_time_minutes in the last period
     # specified by max_work_time_seconds
     def _should_do_break(self, current_time):
-        max_work_time_seconds = self._kwargs['max_work_time_seconds']
-        min_break_time_seconds = self._kwargs['min_break_time_seconds']
+        max_work_time_seconds = self._kwargs.get('max_work_time_seconds')
+        min_break_time_seconds = self._kwargs.get('min_break_time_seconds')
 
-        if self._queue.first()['at'] > current_time - max_work_time_seconds:
+        events = self._queue.iterate_from(current_time - max_work_time_seconds -
+                                          min_break_time_seconds)
+        while len(events) > 0 and events[0]['event'] == PresenceEvent.NOT_PRESENT:
+            events.pop(0)
+
+        if len(events) == 0 or events[0]['at'] > current_time - max_work_time_seconds:
             # it hasn't passed enough time
             return False
 
-        breaks = self._find_all_breaks(
-            self._queue.iterate_until(current_time - max_work_time_seconds))
+        breaks = self._find_all_breaks(events)
         break_periods = self._calculate_break_periods(breaks)
         has_done_any_breaks = max(break_periods, default=0) >= min_break_time_seconds
 
         return not has_done_any_breaks
 
     def _find_all_breaks(self, events):
-        print(events)
         breaks = []
         break_start_at = 0
         is_break = False
@@ -56,7 +59,6 @@ class EventProcessor:
                 break_start_at = 0
         if is_break:
             breaks.append({'start_at': break_start_at, 'end_at': events[-1]['at']})
-        print(breaks)
         return breaks
 
     def _calculate_break_periods(self, breaks):
@@ -73,7 +75,6 @@ class EventProcessor:
                 period_end = _break['end_at']
         if period_start > 0 and period_end > 0:
             break_periods.append(period_end - period_start)
-        print(break_periods)
         return break_periods
 
 
@@ -84,13 +85,10 @@ if __name__ == '__main__':
     queue.push(2, PresenceEvent.PRESENT)
     queue.push(3, PresenceEvent.PRESENT)
     queue.push(4, PresenceEvent.PRESENT)
-    queue.push(5, PresenceEvent.PRESENT)
+    queue.push(5, PresenceEvent.NOT_PRESENT)
     queue.push(6, PresenceEvent.PRESENT)
-    queue.push(7, PresenceEvent.PRESENT)
-    queue.push(8, PresenceEvent.NOT_PRESENT)
-    queue.push(9, PresenceEvent.PRESENT)
     event_processor = EventProcessor(queue, {
         'max_work_time_seconds': 6,
         'min_break_time_seconds': 2
     })
-    print(event_processor.determine_next_action(10))
+    print(event_processor.determine_next_action(7))
