@@ -22,7 +22,7 @@ class PresenceDetector:
         video_capture = cv2.VideoCapture(camera, cv2.CAP_DSHOW)
         if not video_capture.isOpened():
             log.info('Unable to open video device {}'.format(camera))
-            return PresenceEvent.MAYBE_PRESENT
+            return PresenceEvent.NOT_AVAILABLE
         frame = self._capture_frames(video_capture)
         video_capture.release()
         frame = self._preprocess_frame(frame)
