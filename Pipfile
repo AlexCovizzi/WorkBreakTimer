@@ -11,7 +11,7 @@ yapf = "*"
 
 [packages]
 wxpython = "*"
-opencv-python-headless = "*"
+opencv-python = "*"
 
 [requires]
 python_version = "3.8"
