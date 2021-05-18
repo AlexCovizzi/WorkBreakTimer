@@ -1,6 +1,10 @@
+import logging
+import datetime
 from app.timed_event_queue import TimedEventQueue
 from app.notification_event import NotificationEvent
 from app.presence_event import PresenceEvent
+
+log = logging.getLogger(__name__)
 
 
 class EventProcessor:
@@ -17,9 +21,12 @@ class EventProcessor:
         is_doing_break = self._queue.last_event() == PresenceEvent.NOT_PRESENT
         is_not_available = self._queue.last_event() == PresenceEvent.NOT_AVAILABLE
         notify_when_camera_occupied = self._kwargs.get('notify_when_camera_occupied')
-        if should_do_break and not is_doing_break and (notify_when_camera_occupied
-                                                       and is_not_available):
+        if should_do_break:
             next_notification = NotificationEvent.BREAK
+            if is_doing_break:
+                next_notification = NotificationEvent.NOTHING
+            if is_not_available and not notify_when_camera_occupied:
+                next_notification = NotificationEvent.NOTHING
 
         # do nothing if we already sent a notification and the cooldown
         # time hasn't passed yet
@@ -39,8 +46,9 @@ class EventProcessor:
         max_work_time_seconds = self._kwargs.get('max_work_time_seconds')
         min_break_time_seconds = self._kwargs.get('min_break_time_seconds')
 
-        events = self._queue.iterate_from(current_time - max_work_time_seconds -
-                                          min_break_time_seconds)
+        start_from = current_time - max_work_time_seconds - min_break_time_seconds
+        events = self._queue.iterate_from(start_from)
+
         while len(events) > 0 and events[0]['event'] == PresenceEvent.NOT_PRESENT:
             events.pop(0)
 
@@ -50,7 +58,14 @@ class EventProcessor:
 
         breaks = self._find_all_breaks(events)
         break_periods = self._calculate_break_periods(breaks)
-        has_done_any_breaks = max(break_periods, default=0) >= min_break_time_seconds
+        longest_break = max(break_periods, default=0)
+        has_done_any_breaks = longest_break >= min_break_time_seconds
+
+        log.debug(
+            'Found {} breaks starting from {} and the longest break lasted {} seconds'
+            .format(
+                len(breaks), datetime.datetime.fromtimestamp(start_from),
+                longest_break))
 
         return not has_done_any_breaks
 
@@ -100,4 +115,8 @@ if __name__ == '__main__':
         'max_work_time_seconds': 6,
         'min_break_time_seconds': 2
     })
-    print(event_processor.next_notification(7))
+    print(event_processor._calculate_break_periods([
+        {'start_at': 10, 'end_at': 20},
+        {'start_at': 23, 'end_at': 30},
+        {'start_at': 33, 'end_at': 33}
+    ]))
