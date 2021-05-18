@@ -1,7 +1,7 @@
+from app.wx_preferences_dialog import WxPreferencesDialog
 import wx
 import wx.adv
 from app.resources import get_resource_path
-
 
 TRAY_TOOLTIP = 'Work/Break Timer'
 TRAY_ICON = get_resource_path('icon.png')
@@ -17,8 +17,7 @@ class WxTaskBarIcon(wx.adv.TaskBarIcon):
 
     def CreatePopupMenu(self):
         menu = wx.Menu()
-        # self.create_menu_item(menu, 'Open', self.on_open)
-        # self.create_menu_item(menu, 'Say Hello', self.on_hello)
+        self.create_menu_item(menu, 'Preferences', self.on_preferences)
         menu.AppendSeparator()
         self.create_menu_item(menu, 'Exit', self.on_exit)
         return menu
@@ -46,6 +45,7 @@ class WxTaskBarIcon(wx.adv.TaskBarIcon):
         self.Destroy()
         self._main_window.Close()
 
-    def on_open(self, event):
-        frame = wx.Frame(parent=None, title='Hello World')
-        frame.Show()
+    def on_preferences(self, event):
+        preferences_dialog = WxPreferencesDialog(
+            self._main_window.config, parent=self._main_window)
+        preferences_dialog.Show(True)

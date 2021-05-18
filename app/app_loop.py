@@ -1,5 +1,6 @@
 import schedule
 import time
+import datetime
 from app.presence_detector import PresenceDetector
 from app.timed_event_queue import TimedEventQueue
 from app.event_processor import EventProcessor
@@ -29,7 +30,9 @@ class AppLoop:
     def runloop(self):
         self._is_running = True
         while self._is_running:
-            self._scheduler.run_pending()
+            if self._is_enabled() and self._is_in_active_hour():
+                self._scheduler.run_pending()
+
             if not self._is_running:
                 return
             time.sleep(1)
@@ -37,28 +40,43 @@ class AppLoop:
     def on_notification(self, func):
         self._on_notification = func
 
+    def _is_enabled(self):
+        return self._kwargs.get('enabled')
+
+    def _is_in_active_hour(self):
+        active_from_hour = self._kwargs.get('activate_from_hour')
+        active_until_hour = self._kwargs.get('activate_until_hour')
+        local_date_time = time.localtime()
+        local_time = datetime.time(local_date_time.tm_hour, local_date_time.tm_min)
+        return local_time >= active_from_hour and local_time <= active_until_hour
+
     def _schedule_presence_detection(self):
         if not self._presence_detection_job:
             self._scheduler.cancel_job(self._presence_detection_job)
-        seconds_between_detect = self._kwargs.get('check_presence_every_seconds')
-        self._presence_detection_job = self._scheduler.every(
-            seconds_between_detect).seconds.do(self._run_presence_detection)
+        seconds = self._kwargs.get('check_presence_every_seconds')
+        self._presence_detection_job = self._scheduler.every(seconds).seconds.do(
+            self._run_presence_detection)
 
     def _schedule_next_notification(self):
         if not self._next_notification_job:
             self._scheduler.cancel_job(self._next_notification_job)
-        tick_seconds = self._kwargs.get('tick_seconds')
-        self._next_notification_job = self._scheduler.every(
-            tick_seconds).seconds.do(self._run_next_notification)
+        seconds = self._kwargs.get('calculate_notification_every_seconds')
+        self._next_notification_job = self._scheduler.every(seconds).seconds.do(
+            self._run_next_notification)
 
     def _run_presence_detection(self):
         presence_event = self._presence_detector.detect()
-        print(presence_event)
         current_time = time.time()
         self._event_queue.push(current_time, presence_event)
 
     def _run_next_notification(self):
         current_time = time.time()
+        # clear old events
+        max_work_time_seconds = self._kwargs.get('max_work_time_seconds')
+        min_break_time_seconds = self._kwargs.get('min_break_time_seconds')
+        self._event_queue.clear_until(current_time - max_work_time_seconds -
+                                      min_break_time_seconds)
+        # calculate next notification
         notification = self._event_processor.next_notification(current_time)
         if self._on_notification:
             self._on_notification(notification)

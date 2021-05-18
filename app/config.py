@@ -1,50 +1,41 @@
 import configparser
 import os
 import shutil
-from app.resources import get_resource_path
 
 
 class Config:
 
-    FILE_NAME = 'config.ini'
-    SECTION_NAME = 'SETTINGS'
-
-    def __init__(self, name):
-        self._name = name
-        self._path = os.path.join(self.dir_path, Config.FILE_NAME)
-        self._config = self._read_config_file()
-
-    @property
-    def name(self):
-        return self._name
+    def __init__(self, path, default_path, section, mapper):
+        self._path = path
+        self._default_path = default_path
+        self._section = section
+        self._mapper = mapper
+        self._config = self._read()
 
     @property
     def path(self):
         return self._path
 
-    @property
-    def dir_path(self):
-        return os.path.join(os.path.expanduser('~'), '.' + self.name)
+    def read(self):
+        self._config = self._read()
 
-    def reload(self):
-        self._config = self._read_config_file()
+    def write(self):
+        with open(self._path, 'w+') as f:
+            self._config.write(f)
+
+    def getstr(self, key, default_value=''):
+        return self._config.get(self._section, key, fallback=default_value)
 
     def get(self, key, default_value=''):
-        value = self._config.get(Config.SECTION_NAME, key, fallback=default_value)
-        if value.isnumeric():
-            return int(value)
-        return value
+        s = self._config.get(self._section, key, fallback=default_value)
+        return self._mapper.map_to(key, s)
 
-    def getint(self, key, default_value=0):
-        return self._config.getint(Config.SECTION_NAME, key, fallback=default_value)
+    def update(self, kwargs):
+        for k, v in kwargs.items():
+            s = self._mapper.map_from(k, v)
+            self._config.set(self._section, k, s)
 
-    def getfloat(self, key, default_value=0):
-        return self._config.get(Config.SECTION_NAME, key, fallback=default_value)
-
-    def set(self, key, value):
-        self._config.set(Config.SECTION_NAME, key, value)
-
-    def _read_config_file(self):
+    def _read(self):
         self._ensure_config_file_exists()
         config = configparser.ConfigParser()
         config.read(self.path)
@@ -53,5 +44,6 @@ class Config:
     def _ensure_config_file_exists(self):
         if os.path.isfile(self.path):
             return
-        os.makedirs(self.dir_path, exist_ok=True)
-        shutil.copyfile(get_resource_path('default_config.ini'), self.path)
+        dir_path = os.path.dirname(self.path)
+        os.makedirs(dir_path, exist_ok=True)
+        shutil.copyfile(self._default_path, self.path)

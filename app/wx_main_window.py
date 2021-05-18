@@ -9,12 +9,15 @@ class MainWindow(wx.Frame):
 
     def __init__(self, parent, id, kwargs):
         wx.Frame.__init__(self, parent, id, 'Work/Break Timer')
+        self.config = kwargs
 
         self.Connect(-1, -1, EVT_NOTIFICATION_ID, self.OnNotification)
         self.Bind(wx.EVT_CLOSE, self.OnCloseWindow)
 
         self.worker = WorkerThread(self, kwargs)
         self.worker.start()
+
+        self.Centre()
 
     def OnCloseWindow(self, event):
         if self.worker:

@@ -12,6 +12,7 @@ class EventProcessor:
 
     def next_notification(self, current_time):
         next_notification = NotificationEvent.NOTHING
+
         should_do_break = self._should_do_break(current_time)
         is_doing_break = self._queue.last_event() == PresenceEvent.NOT_PRESENT
         is_not_available = self._queue.last_event() == PresenceEvent.NOT_AVAILABLE
