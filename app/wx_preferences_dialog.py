@@ -25,7 +25,12 @@ class WxPreferencesDialog(wx.Dialog):
         self._addOption('min_break_time_seconds', 'Min break time (seconds):')
         self._addOption('break_notification_cooldown_seconds',
                         'Notification cooldown (seconds):')
+        self._addOption('notify_when_camera_occupied',
+                        'Notify when camera is occupied:')
         self._addOption('camera', 'Camera:')
+        self._addOption('num_of_snapshots', 'Number of snapshots:')
+        self._addOption('time_between_snapshots_millis',
+                        'Time between snapshots (millis):')
 
         btnSizer = wx.StdDialogButtonSizer()
         saveBtn = wx.Button(self, wx.ID_OK, label="Save")

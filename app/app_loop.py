@@ -20,6 +20,9 @@ class AppLoop:
         self._presence_detection_job = None
         self._next_notification_job = None
 
+        self._check_presence_every_seconds_cached = None
+        self._calculate_notification_every_seconds_cached = None
+
     def init(self):
         self._schedule_presence_detection()
         self._schedule_next_notification()
@@ -32,6 +35,7 @@ class AppLoop:
         while self._is_running:
             if self._is_enabled() and self._is_in_active_hour():
                 self._scheduler.run_pending()
+                self._reschedule_if_needed()
 
             if not self._is_running:
                 return
@@ -51,21 +55,31 @@ class AppLoop:
         return local_time >= active_from_hour and local_time <= active_until_hour
 
     def _schedule_presence_detection(self):
-        if not self._presence_detection_job:
+        if self._presence_detection_job:
             self._scheduler.cancel_job(self._presence_detection_job)
         seconds = self._kwargs.get('check_presence_every_seconds')
+        self._check_presence_every_seconds_cached = seconds
         self._presence_detection_job = self._scheduler.every(seconds).seconds.do(
             self._run_presence_detection)
 
     def _schedule_next_notification(self):
-        if not self._next_notification_job:
+        if self._next_notification_job:
             self._scheduler.cancel_job(self._next_notification_job)
         seconds = self._kwargs.get('calculate_notification_every_seconds')
+        self._calculate_notification_every_seconds_cached = seconds
         self._next_notification_job = self._scheduler.every(seconds).seconds.do(
             self._run_next_notification)
 
+    def _reschedule_if_needed(self):
+        if (self._kwargs.get('check_presence_every_seconds') !=
+                self._check_presence_every_seconds_cached):
+            self._schedule_presence_detection()
+        if (self._kwargs.get('calculate_notification_every_seconds') !=
+                self._calculate_notification_every_seconds_cached):
+            self._schedule_next_notification()
+
     def _run_presence_detection(self):
-        presence_event = self._presence_detector.detect()
+        presence_event, _ = self._presence_detector.detect()
         current_time = time.time()
         self._event_queue.push(current_time, presence_event)
 

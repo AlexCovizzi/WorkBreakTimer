@@ -1,6 +1,9 @@
+import logging
 import configparser
 import os
 import shutil
+
+log = logging.getLogger(__name__)
 
 
 class Config:
@@ -34,11 +37,13 @@ class Config:
         for k, v in kwargs.items():
             s = self._mapper.map_from(k, v)
             self._config.set(self._section, k, s)
+        log.debug('Write config: ' + str(self._config.items(self._section)))
 
     def _read(self):
         self._ensure_config_file_exists()
         config = configparser.ConfigParser()
         config.read(self.path)
+        log.debug('Read config: ' + str(config.items(self._section)))
         return config
 
     def _ensure_config_file_exists(self):

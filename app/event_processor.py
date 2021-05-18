@@ -16,7 +16,9 @@ class EventProcessor:
         should_do_break = self._should_do_break(current_time)
         is_doing_break = self._queue.last_event() == PresenceEvent.NOT_PRESENT
         is_not_available = self._queue.last_event() == PresenceEvent.NOT_AVAILABLE
-        if should_do_break and not is_doing_break and not is_not_available:
+        notify_when_camera_occupied = self._kwargs.get('notify_when_camera_occupied')
+        if should_do_break and not is_doing_break and (notify_when_camera_occupied
+                                                       and is_not_available):
             next_notification = NotificationEvent.BREAK
 
         # do nothing if we already sent a notification and the cooldown
