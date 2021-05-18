@@ -48,6 +48,7 @@ class EventProcessor:
 
         start_from = current_time - max_work_time_seconds - min_break_time_seconds
         events = self._queue.iterate_from(start_from)
+
         while len(events) > 0 and events[0]['event'] == PresenceEvent.NOT_PRESENT:
             events.pop(0)
 
@@ -114,4 +115,8 @@ if __name__ == '__main__':
         'max_work_time_seconds': 6,
         'min_break_time_seconds': 2
     })
-    print(event_processor.next_notification(7))
+    print(event_processor._calculate_break_periods([
+        {'start_at': 10, 'end_at': 20},
+        {'start_at': 23, 'end_at': 30},
+        {'start_at': 33, 'end_at': 33}
+    ]))
