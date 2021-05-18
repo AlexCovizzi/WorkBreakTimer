@@ -1,27 +1,33 @@
-from app.event_queue import EventQueue
-from enum import Enum
+from app.timed_event_queue import TimedEventQueue
+from app.notification_event import NotificationEvent
 from app.presence_event import PresenceEvent
-
-
-class NextAction(Enum):
-    DO_NOTHING = 'DO_NOTHING'
-    DO_BREAK = 'DO_BREAK'
 
 
 class EventProcessor:
 
-    def __init__(self, queue: EventQueue, kwargs: dict):
+    def __init__(self, queue: TimedEventQueue, kwargs: dict):
         self._queue = queue
         self._kwargs = kwargs
+        self._last_break_notification_time = 0
 
-    def determine_next_action(self, current_time):
-        next_action = NextAction.DO_NOTHING
+    def next_notification(self, current_time):
+        next_notification = NotificationEvent.NOTHING
         should_do_break = self._should_do_break(current_time)
         is_doing_break = self._queue.last_event() == PresenceEvent.NOT_PRESENT
         is_not_available = self._queue.last_event() == PresenceEvent.NOT_AVAILABLE
         if should_do_break and not is_doing_break and not is_not_available:
-            next_action = NextAction.DO_BREAK
-        return next_action
+            next_notification = NotificationEvent.BREAK
+
+        # do nothing if we already sent a notification and the cooldown
+        # time hasn't passed yet
+        if next_notification == NotificationEvent.BREAK:
+            cooldown = self._kwargs.get('break_notification_cooldown_seconds')
+            if current_time - self._last_break_notification_time < cooldown:
+                next_notification = NotificationEvent.NOTHING
+            else:
+                self._last_break_notification_time = current_time
+
+        return next_notification
 
     # Returns True if the user has done any breaks that lasts
     # more than min_break_time_minutes in the last period
@@ -79,7 +85,7 @@ class EventProcessor:
 
 
 if __name__ == '__main__':
-    queue = EventQueue()
+    queue = TimedEventQueue()
     queue.push(0, PresenceEvent.NOT_PRESENT)
     queue.push(1, PresenceEvent.NOT_AVAILABLE)
     queue.push(2, PresenceEvent.PRESENT)
@@ -91,4 +97,4 @@ if __name__ == '__main__':
         'max_work_time_seconds': 6,
         'min_break_time_seconds': 2
     })
-    print(event_processor.determine_next_action(7))
+    print(event_processor.next_notification(7))

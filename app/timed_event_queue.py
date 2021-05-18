@@ -1,7 +1,4 @@
-from app.presence_event import PresenceEvent
-
-
-class EventQueue:
+class TimedEventQueue:
 
     def __init__(self):
         self._queue = list()
@@ -11,7 +8,7 @@ class EventQueue:
     def time_between_events(self):
         return self._time_between_events
 
-    def push(self, epoch_seconds, event: PresenceEvent):
+    def push(self, epoch_seconds, event):
         if len(self._queue) > 0:
             assert epoch_seconds > self.last()['at']
             self._time_between_events = epoch_seconds - self.last()['at']
@@ -24,10 +21,10 @@ class EventQueue:
         return [item for item in self._queue if item['at'] >= epoch_seconds]
 
     def last(self):
-        return self._queue[-1]
+        return self._queue[-1] if len(self._queue) > 0 else None
 
     def last_event(self):
-        return self.last()['event']
+        return self._queue[-1]['event'] if len(self._queue) > 0 else None
 
     def first(self):
         return self._queue[0]

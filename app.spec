@@ -4,7 +4,7 @@
 block_cipher = None
 
 
-a = Analysis(['app.py'],
+a = Analysis(['main.py'],
              binaries=[],
              datas=[('resources', 'resources')],
              hiddenimports=[],

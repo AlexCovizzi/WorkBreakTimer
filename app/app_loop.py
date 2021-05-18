@@ -1,7 +1,7 @@
 import schedule
 import time
 from app.presence_detector import PresenceDetector
-from app.event_queue import EventQueue
+from app.timed_event_queue import TimedEventQueue
 from app.event_processor import EventProcessor
 
 
@@ -12,16 +12,16 @@ class AppLoop:
         self._is_running = False
         self._scheduler = schedule.Scheduler()
         self._presence_detector = PresenceDetector(kwargs)
-        self._event_queue = EventQueue()
+        self._event_queue = TimedEventQueue()
         self._event_processor = EventProcessor(self._event_queue, kwargs)
 
-        self._on_next_action = None
+        self._on_notification = None
         self._presence_detection_job = None
-        self._determine_next_action_job = None
+        self._next_notification_job = None
 
     def init(self):
         self._schedule_presence_detection()
-        self._schedule_determine_next_action()
+        self._schedule_next_notification()
 
     def stop(self):
         self._is_running = False
@@ -34,8 +34,8 @@ class AppLoop:
                 return
             time.sleep(1)
 
-    def on_next_action(self, func):
-        self._on_next_action = func
+    def on_notification(self, func):
+        self._on_notification = func
 
     def _schedule_presence_detection(self):
         if not self._presence_detection_job:
@@ -44,12 +44,12 @@ class AppLoop:
         self._presence_detection_job = self._scheduler.every(
             seconds_between_detect).seconds.do(self._run_presence_detection)
 
-    def _schedule_determine_next_action(self):
-        if not self._determine_next_action_job:
-            self._scheduler.cancel_job(self._determine_next_action_job)
+    def _schedule_next_notification(self):
+        if not self._next_notification_job:
+            self._scheduler.cancel_job(self._next_notification_job)
         tick_seconds = self._kwargs.get('tick_seconds')
-        self._determine_next_action_job = self._scheduler.every(
-            tick_seconds).seconds.do(self._run_determine_next_action)
+        self._next_notification_job = self._scheduler.every(
+            tick_seconds).seconds.do(self._run_next_notification)
 
     def _run_presence_detection(self):
         presence_event = self._presence_detector.detect()
@@ -57,11 +57,11 @@ class AppLoop:
         current_time = time.time()
         self._event_queue.push(current_time, presence_event)
 
-    def _run_determine_next_action(self):
+    def _run_next_notification(self):
         current_time = time.time()
-        next_action = self._event_processor.determine_next_action(current_time)
-        if self._on_next_action:
-            self._on_next_action(next_action)
+        notification = self._event_processor.next_notification(current_time)
+        if self._on_notification:
+            self._on_notification(notification)
 
 
 if __name__ == '__main__':
