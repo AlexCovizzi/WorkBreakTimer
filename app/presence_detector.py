@@ -108,11 +108,15 @@ class PresenceDetector:
 
 if __name__ == '__main__':
     args = {'camera': 0}
-    presence_detector = PresenceDetector({'camera': 0})
+    presence_detector = PresenceDetector({
+        'camera': 0,
+        'num_of_snapshots': 1,
+        'time_between_snapshots_millis': 0
+    })
     while True:
         event, info = presence_detector.detect()
         img_with_boxes = info['img'].copy()
         for (x, y, w, h) in info['boxes']:
-            cv2.rectangle(img_with_boxes, (x, y), (x + w, y + h), (0, 255, 0), 2)
+            cv2.rectangle(img_with_boxes, (x, y), (x + w, y + h), (255, 255, 0), 2)
         cv2.imshow('PresenceDetector[Debug]', img_with_boxes)
         cv2.waitKey(delay=60)

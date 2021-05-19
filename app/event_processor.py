@@ -46,14 +46,14 @@ class EventProcessor:
         max_work_time_seconds = self._kwargs.get('max_work_time_seconds')
         min_break_time_seconds = self._kwargs.get('min_break_time_seconds')
 
-        start_from = current_time - max_work_time_seconds
+        start_from = current_time - max_work_time_seconds - min_break_time_seconds
         events = self._queue.iterate_from(start_from)
 
         if len(events) == 0:
             log.debug('No events yet')
             return False
 
-        if events[0]['at'] > start_from:
+        if events[0]['at'] > start_from + min_break_time_seconds:
             log.debug('Oldest event at {} is more recent than {}'.format(
                 datetime.datetime.fromtimestamp(events[0]['at']),
                 datetime.datetime.fromtimestamp(start_from)))
