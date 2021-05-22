@@ -79,17 +79,13 @@ class AppLoop:
             self._schedule_next_notification()
 
     def _run_presence_detection(self):
-        presence_event, _ = self._presence_detector.detect()
+        presence_event = self._presence_detector.detect()
         current_time = time.time()
         self._event_queue.push(current_time, presence_event)
 
     def _run_next_notification(self):
         current_time = time.time()
-        # clear old events
-        max_work_time_seconds = self._kwargs.get('max_work_time_seconds')
-        min_break_time_seconds = self._kwargs.get('min_break_time_seconds')
-        self._event_queue.clear_until(current_time - max_work_time_seconds -
-                                      min_break_time_seconds)
+
         # calculate next notification
         notification = self._event_processor.next_notification(current_time)
         if self._on_notification:

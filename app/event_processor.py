@@ -60,7 +60,7 @@ class EventProcessor:
             return False
 
         breaks = self._find_all_breaks(events)
-        break_periods = self._calculate_break_periods(breaks)
+        break_periods = [br['end_at'] - br['start_at'] for br in breaks]
         longest_break = max(break_periods, default=0)
         has_done_any_breaks = longest_break >= min_break_time_seconds
 
@@ -87,22 +87,6 @@ class EventProcessor:
         if is_break:
             breaks.append({'start_at': break_start_at, 'end_at': events[-1]['at']})
         return breaks
-
-    def _calculate_break_periods(self, breaks):
-        period_start = 0
-        period_end = 0
-        break_periods = []
-        for _break in breaks:
-            if _break['start_at'] - period_end <= self._queue.time_between_events * 2:
-                period_end = _break['end_at']
-            else:
-                if period_start > 0 and period_end > 0:
-                    break_periods.append(period_end - period_start)
-                period_start = _break['start_at']
-                period_end = _break['end_at']
-        if period_start > 0 and period_end > 0:
-            break_periods.append(period_end - period_start)
-        return break_periods
 
 
 if __name__ == '__main__':
