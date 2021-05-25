@@ -25,10 +25,8 @@ class PresenceDetector:
 
         start_detect = time.time()
         for image in frames:
-            prep_image = self._preprocess_image(image)
-            results = self._face_detector.detect_faces(prep_image)
-            has_face = len([result['confidence'] > 0.9 for result in results]) > 0
-            if has_face:
+            results = self._detect_faces(image, confidence_threshold=0.9)
+            if len(results) > 0:
                 log.debug('Face detected in {} seconds: {}'.format(
                     time.time() - start_detect, results))
                 return PresenceEvent.PRESENT
@@ -49,6 +47,11 @@ class PresenceDetector:
         duration = time.time() - start_at
         log.debug('Captured {} snapshots in {} seconds'.format(len(frames), duration))
         return frames
+
+    def _detect_faces(self, image, confidence_threshold=0.9):
+        image = self._preprocess_image(image)
+        results = self._face_detector.detect_faces(image)
+        return [result['confidence'] > confidence_threshold for result in results]
 
     def _preprocess_image(self, image):
         return cv2.cvtColor(image, cv2.COLOR_BGR2RGB)

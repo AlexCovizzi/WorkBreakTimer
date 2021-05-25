@@ -1,5 +1,5 @@
 __app__ = 'WorkBreakTimer'
 __display__ = 'Work/Break Timer'
-__version__ = '0.1.2'
+__version__ = '0.2.0'
 __repo__ = 'https://github.com/AlexCovizzi/WorkBreakTimer'
 __issues__ = 'https://github.com/AlexCovizzi/WorkBreakTimer/issues'
