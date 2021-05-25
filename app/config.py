@@ -13,7 +13,8 @@ class Config:
         self._default_path = default_path
         self._section = section
         self._mapper = mapper
-        self._config = self._read()
+
+        self.read()
 
     @property
     def path(self):
@@ -21,6 +22,7 @@ class Config:
 
     def read(self):
         self._config = self._read()
+        log.debug('Read config: ' + str(self.items()))
 
     def write(self):
         with open(self._path, 'w+') as f:
@@ -33,17 +35,20 @@ class Config:
         s = self._config.get(self._section, key, fallback=default_value)
         return self._mapper.map_to(key, s)
 
+    def items(self):
+        items = self._config.items(self._section)
+        return [(item[0], str(self._mapper.map_to(item[0], item[1]))) for item in items]
+
     def update(self, kwargs):
         for k, v in kwargs.items():
             s = self._mapper.map_from(k, v)
             self._config.set(self._section, k, s)
-        log.debug('Write config: ' + str(self._config.items(self._section)))
+        log.debug('Write config: ' + str(self.items()))
 
     def _read(self):
         self._ensure_config_file_exists()
         config = configparser.ConfigParser()
         config.read(self.path)
-        log.debug('Read config: ' + str(config.items(self._section)))
         return config
 
     def _ensure_config_file_exists(self):

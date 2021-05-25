@@ -3,6 +3,7 @@ import wx
 import wx.adv
 from app.worker_thread import WorkerThread
 from app.wx_notification_event import EVT_NOTIFICATION_ID
+from app.resources import get_resource_path
 
 
 class MainWindow(wx.Frame):
@@ -17,6 +18,7 @@ class MainWindow(wx.Frame):
         self.worker = WorkerThread(self, kwargs)
         self.worker.start()
 
+        self.set_icon()
         self.Centre()
 
     def OnCloseWindow(self, event):
@@ -34,3 +36,12 @@ class MainWindow(wx.Frame):
                 parent=self,
                 flags=wx.ICON_INFORMATION)
             notification.Show(timeout=3)
+
+    def set_icon(self):
+        path = get_resource_path('icon.ico')
+        icon_bundle = wx.IconBundle()
+        icon_bundle.AddIcon(
+            wx.Icon(path, wx.BITMAP_TYPE_ICO, desiredWidth=16, desiredHeight=16))
+        icon_bundle.AddIcon(
+            wx.Icon(path, wx.BITMAP_TYPE_ICO, desiredWidth=32, desiredHeight=32))
+        self.SetIcons(icon_bundle)

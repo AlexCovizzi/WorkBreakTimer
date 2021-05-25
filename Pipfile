@@ -13,6 +13,7 @@ yapf = "*"
 wxpython = "*"
 opencv-python = "*"
 schedule = "*"
+mtcnn-opencv = "*"
 
 [requires]
 python_version = "3.8"
