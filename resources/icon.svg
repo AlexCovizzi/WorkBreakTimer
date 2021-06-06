@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="512pt"
+   height="512pt"
+   viewBox="0 0 512 512"
+   version="1.1"
+   id="svg5"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs2">
+    <linearGradient
+       id="linearGradient4164">
+      <stop
+         style="stop-color:#00e8ab;stop-opacity:1;"
+         offset="0"
+         id="stop4160" />
+      <stop
+         style="stop-color:#00eec8;stop-opacity:1"
+         offset="1"
+         id="stop4162" />
+    </linearGradient>
+    <linearGradient
+       xlink:href="#linearGradient4164"
+       id="linearGradient4166"
+       x1="560"
+       y1="590"
+       x2="151"
+       y2="158"
+       gradientUnits="userSpaceOnUse" />
+  </defs>
+  <g
+     id="layer1">
+    <path
+       id="path528"
+       style="fill:url(#linearGradient4166);fill-rule:evenodd;stroke-width:0.4;fill-opacity:1;stroke:#00cb96;stroke-opacity:1;opacity:1;stroke-miterlimit:4;stroke-dasharray:none"
+       d="M 256 0 L 256 85.333984 L 298.66602 85.333984 L 298.66602 91.103516 A 297.33333 297.4 0 0 0 44 385.40039 A 297.33333 297.4 0 0 0 341.33398 682.80078 A 297.33333 297.4 0 0 0 638.66602 385.40039 A 297.33333 297.4 0 0 0 384 91.099609 L 384 85.333984 L 426.66602 85.333984 L 426.66602 0 L 256 0 z M 542.63672 62.666016 L 493.33398 111.9707 L 614.69727 233.33398 L 664 184.0293 L 542.63672 62.666016 z M 341.33398 180 A 205.33333 205.33333 0 0 1 546.66602 385.33398 A 205.33333 205.33333 0 0 1 341.33398 590.66602 A 205.33333 205.33333 0 0 1 136 385.33398 A 205.33333 205.33333 0 0 1 341.33398 180 z M 341.33398 233.33398 L 341.33398 324 A 61.333333 61.333333 0 0 1 402.66602 385.33398 A 61.333333 61.333333 0 0 1 341.33398 446.66602 A 61.333333 61.333333 0 0 1 280 385.33398 L 189.33398 385.33398 A 152 152 0 0 0 341.33398 537.33398 A 152 152 0 0 0 493.33398 385.33398 A 152 152 0 0 0 341.33398 233.33398 z "
+       transform="scale(0.75)" />
+  </g>
+  <g
+     id="layer2" />
+</svg>

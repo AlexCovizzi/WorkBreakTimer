@@ -1,39 +1,40 @@
+from typing import Optional
 import logging
 import datetime
-from app.timed_event_queue import TimedEventQueue
-from app.notification_event import NotificationEvent
-from app.presence_event import PresenceEvent
+from app.timed_queue import TimedQueue
+from app.notification import BreakNotification, Notification
+from app.presence_detector import DetectionResult
 
 log = logging.getLogger(__name__)
 
 
-class EventProcessor:
+class NotificationCalculator:
 
-    def __init__(self, queue: TimedEventQueue, kwargs: dict):
+    def __init__(self, queue: TimedQueue, config: dict):
         self._queue = queue
-        self._kwargs = kwargs
+        self._config = config
         self._last_break_notification_time = 0
 
-    def next_notification(self, current_time):
-        next_notification = NotificationEvent.NOTHING
+    def calculate(self, current_time: int) -> Optional[Notification]:
+        next_notification = None
 
         should_do_break = self._should_do_break(current_time)
-        is_doing_break = self._queue.last_event() == PresenceEvent.NOT_PRESENT
-        is_not_available = self._queue.last_event() == PresenceEvent.NOT_AVAILABLE
-        notify_when_camera_occupied = self._kwargs.get('notify_when_camera_occupied')
+        is_doing_break = self._queue.last_event() == DetectionResult.NOT_PRESENT
+        is_not_available = self._queue.last_event() == DetectionResult.NOT_AVAILABLE
+        notify_when_camera_occupied = self._config.get('notify_when_camera_occupied')
         if should_do_break:
-            next_notification = NotificationEvent.BREAK
+            next_notification = BreakNotification()
             if is_doing_break:
-                next_notification = NotificationEvent.NOTHING
+                next_notification = None
             if is_not_available and not notify_when_camera_occupied:
-                next_notification = NotificationEvent.NOTHING
+                next_notification = None
 
         # do nothing if we already sent a notification and the cooldown
         # time hasn't passed yet
-        if next_notification == NotificationEvent.BREAK:
-            cooldown = self._kwargs.get('break_notification_cooldown_seconds')
+        if next_notification == BreakNotification():
+            cooldown = self._config.get('break_notification_cooldown_seconds')
             if current_time - self._last_break_notification_time < cooldown:
-                next_notification = NotificationEvent.NOTHING
+                next_notification = None
             else:
                 self._last_break_notification_time = current_time
 
@@ -43,8 +44,8 @@ class EventProcessor:
     # more than min_break_time_minutes in the last period
     # specified by max_work_time_seconds
     def _should_do_break(self, current_time):
-        max_work_time_seconds = self._kwargs.get('max_work_time_seconds')
-        min_break_time_seconds = self._kwargs.get('min_break_time_seconds')
+        max_work_time_seconds = self._config.get('max_work_time_seconds')
+        min_break_time_seconds = self._config.get('min_break_time_seconds')
 
         start_from = current_time - max_work_time_seconds - min_break_time_seconds
         events = self._queue.iterate_from(start_from)
@@ -77,10 +78,10 @@ class EventProcessor:
         break_start_at = 0
         is_break = False
         for item in events:
-            if not is_break and item['event'] == PresenceEvent.NOT_PRESENT:
+            if not is_break and item['item'] == DetectionResult.NOT_PRESENT:
                 is_break = True
                 break_start_at = item['at']
-            if is_break and item['event'] != PresenceEvent.NOT_PRESENT:
+            if is_break and item['item'] != DetectionResult.NOT_PRESENT:
                 breaks.append({'start_at': break_start_at, 'end_at': item['at']})
                 is_break = False
                 break_start_at = 0
@@ -90,15 +91,15 @@ class EventProcessor:
 
 
 if __name__ == '__main__':
-    queue = TimedEventQueue()
-    queue.push(0, PresenceEvent.NOT_PRESENT)
-    queue.push(1, PresenceEvent.NOT_AVAILABLE)
-    queue.push(2, PresenceEvent.PRESENT)
-    queue.push(3, PresenceEvent.PRESENT)
-    queue.push(4, PresenceEvent.PRESENT)
-    queue.push(5, PresenceEvent.NOT_PRESENT)
-    queue.push(6, PresenceEvent.PRESENT)
-    event_processor = EventProcessor(queue, {
+    queue = TimedQueue()
+    queue.push(0, DetectionResult.NOT_PRESENT)
+    queue.push(1, DetectionResult.NOT_AVAILABLE)
+    queue.push(2, DetectionResult.PRESENT)
+    queue.push(3, DetectionResult.PRESENT)
+    queue.push(4, DetectionResult.PRESENT)
+    queue.push(5, DetectionResult.NOT_PRESENT)
+    queue.push(6, DetectionResult.PRESENT)
+    event_processor = NotificationCalculator(queue, {
         'max_work_time_seconds': 6,
         'min_break_time_seconds': 2
     })

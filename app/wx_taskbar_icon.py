@@ -1,63 +1,53 @@
+from app.named_event import NamedEvent
 import logging
-import os
-import webbrowser
 import wx
 import wx.adv
-from app.__meta__ import __display__, __version__, __issues__, __repo__
-from app.wx_preferences_dialog import WxPreferencesDialog
-from app.resources import get_resource_path
+from app.__meta__ import __display__, __version__
+from app.wx_icon import wx_icon
 
 log = logging.getLogger(__name__)
-
-TRAY_TOOLTIP = 'Work/Break Timer'
 
 
 class WxTaskBarIcon(wx.adv.TaskBarIcon):
 
-    def __init__(self, main_window):
-        wx.adv.TaskBarIcon.__init__(self)
-        self._main_window = main_window
-        self.set_icon()
+    def __init__(self, main: wx.EvtHandler):
+        super().__init__()
+        self.main = main
+
+        self.SetIcon(wx_icon(32), __display__)
         # self.Bind(wx.adv.EVT_TASKBAR_LEFT_DOWN, self.on_left_down)
 
     def CreatePopupMenu(self):
         menu = wx.Menu()
-        self.create_menu_item(menu, __display__ + ' v' + __version__, self.on_app_name)
-        self.create_menu_item(menu, 'Report Issue', self.on_report_issue)
+        self.CreateMenuItem(menu, __display__ + ' v' + __version__, self.OnMenuAppName)
+        self.CreateMenuItem(menu, 'Report Issue', self.OnMenuReportIssue)
         menu.AppendSeparator()
-        self.create_menu_item(menu, 'Preferences', self.on_preferences)
-        self.create_menu_item(menu, 'Show Log', self.on_show_log)
+        self.CreateMenuItem(menu, 'Preferences', self.OnMenuPreferences)
+        self.CreateMenuItem(menu, 'Show Logs', self.OnMenuShowLogs)
         menu.AppendSeparator()
-        self.create_menu_item(menu, 'Exit', self.on_exit)
+        self.CreateMenuItem(menu, 'Exit', self.OnMenuAppExit)
         return menu
 
-    def create_menu_item(self, menu, label, func=None):
-        item = wx.MenuItem(menu, -1, label)
+    def CreateMenuItem(self, menu: wx.Menu, label: str, func=None):
+        item = wx.MenuItem(menu, wx.ID_ANY, label)
         if func:
             menu.Bind(wx.EVT_MENU, func, id=item.GetId())
         menu.Append(item)
         return item
 
-    def set_icon(self):
-        path = get_resource_path('icon.ico')
-        icon = wx.Icon(path, wx.BITMAP_TYPE_ICO, desiredWidth=32, desiredHeight=32)
-        self.SetIcon(icon, TRAY_TOOLTIP)
+    def OnMenuAppName(self, event):
+        self.main.QueueEvent(NamedEvent('icon-app-name'))
 
-    def on_app_name(self, event):
-        webbrowser.open(__repo__)
+    def OnMenuReportIssue(self, event):
+        self.main.QueueEvent(NamedEvent('icon-report-issue'))
 
-    def on_report_issue(self, event):
-        webbrowser.open(__issues__)
+    def OnMenuPreferences(self, event):
+        self.main.QueueEvent(NamedEvent('icon-preferences'))
 
-    def on_show_log(self, event):
-        os.startfile(logging.getLoggerClass().root.handlers[0].baseFilename, 'open')
+    def OnMenuShowLogs(self, event):
+        self.main.QueueEvent(NamedEvent('icon-show-logs'))
 
-    def on_exit(self, event):
+    def OnMenuAppExit(self, event):
         self.RemoveIcon()
         self.Destroy()
-        self._main_window.Close()
-
-    def on_preferences(self, event):
-        preferences_dialog = WxPreferencesDialog(
-            self._main_window.config, parent=self._main_window)
-        preferences_dialog.Show(True)
+        self.main.QueueEvent(NamedEvent('icon-app-exit'))

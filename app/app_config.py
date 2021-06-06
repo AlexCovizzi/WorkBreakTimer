@@ -1,15 +1,17 @@
-from app.config_mapper import ConfigMapper
 import os
+import tempfile
 from app.__meta__ import __app__
 from app.config import Config
-from app.resources import get_resource_path
+from app.config_mapper import ConfigMapper
+from app.util import is_prod, resource_path
 
 
 class AppConfig(Config):
 
     def __init__(self):
-        path = os.path.join(os.path.expanduser('~'), '.' + __app__, 'config.ini')
-        default_path = get_resource_path('default_config.ini')
+        base_dir = os.path.expanduser('~') if is_prod() else tempfile.gettempdir()
+        path = os.path.join(base_dir, '.' + __app__, 'config.ini')
+        default_path = resource_path('default_config.ini')
         section = 'SETTINGS'
         super().__init__(path, default_path, section, self.mapper())
 
