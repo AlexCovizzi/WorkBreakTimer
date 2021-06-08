@@ -31,7 +31,7 @@ class NotificationCalculator:
 
         # do nothing if we already sent a notification and the cooldown
         # time hasn't passed yet
-        if next_notification == BreakNotification():
+        if next_notification is not None:
             cooldown = self._config.get('break_notification_cooldown_seconds')
             if current_time - self._last_break_notification_time < cooldown:
                 next_notification = None
