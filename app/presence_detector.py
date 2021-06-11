@@ -1,24 +1,32 @@
 import logging
 import time
+import enum
 import cv2
 from mtcnn_cv2 import MTCNN
-from app.presence_event import PresenceEvent
 
 log = logging.getLogger(__name__)
 
 
+class DetectionResult(enum.Enum):
+    PRESENT = 'PRESENT'
+    NOT_PRESENT = 'NOT_PRESENT'
+    # NOT_AVAILABLE is used in case the camera is not available
+    # or it cannot be opened
+    NOT_AVAILABLE = 'NOT_AVAILABLE'
+
+
 class PresenceDetector:
 
-    def __init__(self, kwargs: dict):
-        self._kwargs = kwargs
+    def __init__(self, config: dict):
+        self._config = config
         self._face_detector = MTCNN()
 
-    def detect(self) -> PresenceEvent:
-        camera = self._kwargs.get('camera')
+    def detect(self) -> dict:
+        camera = self._config.get('camera')
         video_capture = cv2.VideoCapture(camera, cv2.CAP_DSHOW)
         if not video_capture.isOpened():
             log.info('Unable to open video device {}'.format(camera))
-            return PresenceEvent.NOT_AVAILABLE
+            return DetectionResult.NOT_AVAILABLE
 
         frames = self._capture_frames(video_capture)
         video_capture.release()
@@ -29,14 +37,14 @@ class PresenceDetector:
             if len(results) > 0:
                 log.debug('Face detected in {} seconds: {}'.format(
                     time.time() - start_detect, results))
-                return PresenceEvent.PRESENT
+                return DetectionResult.PRESENT
         log.debug('No face detected in {} seconds'.format(time.time() - start_detect))
-        return PresenceEvent.NOT_PRESENT
+        return DetectionResult.NOT_PRESENT
 
     def _capture_frames(self, video_capture):
         start_at = time.time()
-        num_of_snapshots = self._kwargs.get('num_of_snapshots')
-        time_between_snapshots = self._kwargs.get('time_between_snapshots_millis')
+        num_of_snapshots = self._config.get('num_of_snapshots')
+        time_between_snapshots = self._config.get('time_between_snapshots_millis')
         frames = []
         for i in range(num_of_snapshots):
             retval, frame = video_capture.read()

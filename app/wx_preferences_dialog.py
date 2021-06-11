@@ -1,68 +1,74 @@
+from app.named_event import NamedEvent
 import wx
 import wx.adv
+import wx.lib.scrolledpanel
+from app.wx_icon import wx_icon
 from app.config import Config
+from app.wx_preferences_detection import WxPreferencesDetection
+from app.wx_preferences_notifications import WxPreferencesNotifications
+from app.wx_preferences_general import WxPreferencesGeneral
 
 
 class WxPreferencesDialog(wx.Dialog):
 
-    def __init__(self, config: Config, parent=None):
-        wx.Dialog.__init__(self, parent, wx.ID_ANY, 'Preferences')
-        self._config = config
-        self.createWidgets()
+    def __init__(self, parent: wx.Window, config: Config):
+        super().__init__(
+            parent, wx.ID_ANY, 'Preferences', style=wx.DEFAULT_DIALOG_STYLE)
+        self.main = parent
 
-    def createWidgets(self):
-        self._mainsizer = wx.BoxSizer(wx.VERTICAL)
-        self._options = []
+        self.SetForegroundColour(wx.Colour(32, 32, 32))
+        self.SetBackgroundColour(wx.Colour(252, 254, 254))
 
-        self._addOption('enabled', 'Enabled:')
-        self._addOption('activate_from_hour', 'Activate from:')
-        self._addOption('activate_until_hour', 'Activate until:')
-        self._addOption('calculate_notification_every_seconds',
-                        'Calculate notification every (seconds):')
-        self._addOption('check_presence_every_seconds',
-                        'Detect presence every (seconds):')
-        self._addOption('max_work_time_seconds', 'Max work time (seconds):')
-        self._addOption('min_break_time_seconds', 'Min break time (seconds):')
-        self._addOption('break_notification_cooldown_seconds',
-                        'Notification cooldown (seconds):')
-        self._addOption('notify_when_camera_occupied',
-                        'Notify when camera is occupied:')
-        self._addOption('camera', 'Camera:')
-        self._addOption('num_of_snapshots', 'Number of snapshots:')
-        self._addOption('time_between_snapshots_millis',
-                        'Time between snapshots (millis):')
+        self.mainSizer = wx.BoxSizer(wx.VERTICAL)
+        self.SetSizer(self.mainSizer)
+
+        self.generalSection = WxPreferencesGeneral(self, config)
+        self.notificationsSection = WxPreferencesNotifications(self, config)
+        self.detectionSection = WxPreferencesDetection(self, config)
+
+        self.mainSizer.Add(self.generalSection, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, 4)
+        self.mainSizer.Add(self.notificationsSection, 0, wx.EXPAND | wx.LEFT | wx.RIGHT,
+                           4)
+        self.mainSizer.Add(self.detectionSection, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, 4)
 
         btnSizer = wx.StdDialogButtonSizer()
         saveBtn = wx.Button(self, wx.ID_OK, label="Save")
-        saveBtn.Bind(wx.EVT_BUTTON, self.onSave)
-        btnSizer.AddButton(saveBtn)
+        saveBtn.Bind(wx.EVT_BUTTON, self.OnSave)
+        saveBtn.SetFont(self.CreateFont())
 
-        cancelBtn = wx.Button(self, wx.ID_CANCEL)
+        cancelBtn = wx.Button(self, wx.ID_CANCEL, label="Cancel")
+        cancelBtn.SetFont(self.CreateFont())
+
+        btnSizer.AddButton(saveBtn)
         btnSizer.AddButton(cancelBtn)
         btnSizer.Realize()
 
-        self._mainsizer.Add(btnSizer, 0, wx.ALL | wx.ALIGN_RIGHT, 5)
-        self.SetSizer(self._mainsizer)
+        self.mainSizer.AddStretchSpacer()
+        self.mainSizer.Add(btnSizer, 0, wx.ALL | wx.ALIGN_RIGHT, 8)
 
-        self.Fit()
+        bestSize = self.GetBestSize()
+        self.SetSize(bestSize.GetWidth() * 1.2, bestSize.GetHeight())
+
         self.Centre()
+        self.SetIcons()
 
-    def onSave(self, event):
-        updated = {item['key']: str(item['extractor']()) for item in self._options}
-        self._config.update(updated)
-        self._config.write()
-        self._config.read()
-        self.Close(0)
+    def SetIcons(self):
+        icon_bundle = wx.IconBundle()
+        icon_bundle.AddIcon(wx_icon(16))
+        icon_bundle.AddIcon(wx_icon(32))
+        super().SetIcons(icon_bundle)
 
-    def _addOption(self, key, label):
-        font = wx.Font(wx.FONTSIZE_SMALL, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL,
-                       wx.FONTWEIGHT_NORMAL)
-        sizer = wx.BoxSizer(wx.HORIZONTAL)
-        label = wx.StaticText(self, label=label)
-        label.SetFont(font)
-        edit = wx.TextCtrl(self, value=self._config.getstr(key), name=key)
-        sizer.Add(label, 1, wx.ALL, 8)
-        sizer.Add(edit, 1, wx.ALL, 8)
-        self._mainsizer.Add(sizer, 0, wx.EXPAND)
+    def OnSave(self, event):
+        event = NamedEvent(
+            'save-config',
+            data={
+                **self.generalSection.GetValue(),
+                **self.notificationsSection.GetValue(),
+                **self.detectionSection.GetValue()
+            })
+        self.main.QueueEvent(event)
+        self.EndModal(0)
 
-        self._options.append({'key': key, 'extractor': lambda: edit.GetValue()})
+    def CreateFont(self):
+        return wx.Font(wx.NORMAL_FONT.GetPointSize(), wx.FONTFAMILY_DEFAULT,
+                       wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, wx.EmptyString)

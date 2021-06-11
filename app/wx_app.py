@@ -1,16 +1,20 @@
-from app.wx_taskbar_icon import WxTaskBarIcon
 import wx
-from app.wx_main_window import MainWindow
+from app.wx_main_window import WxMainWindow
 
 
 class WxApp(wx.App):
 
-    def __init__(self, kwargs):
-        self._kwargs = kwargs
+    def __init__(self, config):
+        self.config = config
         super().__init__()
 
     def OnInit(self):
-        self.window = MainWindow(None, -1, self._kwargs)
-        self.taskbar_icon = WxTaskBarIcon(self.window)
-        self.window.Show(False)
+        self.main = WxMainWindow(self.config)
+
+        self.main.Show(False)
+        self.SetTopWindow(self.main)
+
         return True
+
+    def OnExit(self):
+        return super().OnExit()

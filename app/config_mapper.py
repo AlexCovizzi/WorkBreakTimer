@@ -56,4 +56,4 @@ class ConfigMapper:
     def _from_time(self, v):
         if type(v) is str:
             return v
-        return '{}:{}'.format(v.hour, v.minute)
+        return '{}:{}:{}'.format(v.hour, v.minute, v.second)
