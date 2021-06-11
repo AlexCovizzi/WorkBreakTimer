@@ -1,3 +1,4 @@
+from app.named_event import NamedEvent
 import wx
 import wx.adv
 import wx.lib.scrolledpanel
@@ -12,11 +13,8 @@ class WxPreferencesDialog(wx.Dialog):
 
     def __init__(self, parent: wx.Window, config: Config):
         super().__init__(
-            parent,
-            wx.ID_ANY,
-            'Preferences',
-            style=wx.DEFAULT_DIALOG_STYLE)
-        self.config = config
+            parent, wx.ID_ANY, 'Preferences', style=wx.DEFAULT_DIALOG_STYLE)
+        self.main = parent
 
         self.SetForegroundColour(wx.Colour(32, 32, 32))
         self.SetBackgroundColour(wx.Colour(252, 254, 254))
@@ -49,7 +47,7 @@ class WxPreferencesDialog(wx.Dialog):
         self.mainSizer.Add(btnSizer, 0, wx.ALL | wx.ALIGN_RIGHT, 8)
 
         bestSize = self.GetBestSize()
-        self.SetSize(bestSize.GetWidth() * 1.3, bestSize.GetHeight() * 1.05)
+        self.SetSize(bestSize.GetWidth() * 1.2, bestSize.GetHeight())
 
         self.Centre()
         self.SetIcons()
@@ -61,14 +59,14 @@ class WxPreferencesDialog(wx.Dialog):
         super().SetIcons(icon_bundle)
 
     def OnSave(self, event):
-        values = {
-            **self.generalSection.GetValue(),
-            **self.notificationsSection.GetValue(),
-            **self.detectionSection.GetValue()
-        }
-        self.config.update(values)
-        self.config.write()
-        self.config.read()
+        event = NamedEvent(
+            'save-config',
+            data={
+                **self.generalSection.GetValue(),
+                **self.notificationsSection.GetValue(),
+                **self.detectionSection.GetValue()
+            })
+        self.main.QueueEvent(event)
         self.EndModal(0)
 
     def CreateFont(self):

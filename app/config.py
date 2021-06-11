@@ -27,6 +27,7 @@ class Config:
     def write(self):
         with open(self._path, 'w+') as f:
             self._config.write(f)
+        log.debug('Write config: ' + str(self.items()))
 
     def getstr(self, key, default_value=''):
         return self._config.get(self._section, key, fallback=default_value)
@@ -43,7 +44,6 @@ class Config:
         for k, v in kwargs.items():
             s = self._mapper.map_from(k, v)
             self._config.set(self._section, k, s)
-        log.debug('Write config: ' + str(self.items()))
 
     def _read(self):
         self._ensure_config_file_exists()

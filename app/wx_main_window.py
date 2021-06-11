@@ -6,6 +6,7 @@ import wx.adv
 from app.__meta__ import __display__, __issues__, __repo__
 from app.util import is_dev
 from app.wx_icon import wx_icon
+from app.config import Config
 from app.worker_thread import WorkerThread
 from app.wx_taskbar_icon import WxTaskBarIcon
 from app.wx_preferences_dialog import WxPreferencesDialog
@@ -14,7 +15,7 @@ from app.named_event import NamedEventBinder
 
 class WxMainWindow(wx.Frame, NamedEventBinder):
 
-    def __init__(self, config):
+    def __init__(self, config: Config):
         wx.Frame.__init__(self, None, title=__display__)
         NamedEventBinder.__init__(self)
         self.config = config
@@ -39,6 +40,7 @@ class WxMainWindow(wx.Frame, NamedEventBinder):
         self.Bind(wx.EVT_WINDOW_DESTROY, self.OnDestroy)
 
         self.BindByName('notification', self.OnNotification)
+        self.BindByName('save-config', self.OnSaveConfig)
         self.BindByName('icon-app-name', self.OnIconMenuAppName)
         self.BindByName('icon-report-issue', self.OnIconMenuReportIssue)
         self.BindByName('icon-preferences', self.OnIconMenuPreferences)
@@ -62,6 +64,10 @@ class WxMainWindow(wx.Frame, NamedEventBinder):
             parent=self,
             flags=wx.ICON_INFORMATION)
         wx_notification.Show(timeout=3)
+
+    def OnSaveConfig(self, event):
+        self.config.update(event.data)
+        self.config.write()
 
     def OnIconMenuAppName(self, event):
         webbrowser.open(__repo__)

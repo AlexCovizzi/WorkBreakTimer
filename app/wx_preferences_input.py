@@ -28,13 +28,31 @@ class WxPreferencesInput(wx.Panel):
         self.sizer.Add(self.label, 1, wx.ALIGN_CENTER | wx.ALL, 8)
         self.sizer.Add(self.input, 1, wx.ALIGN_CENTER | wx.ALL, 8)
 
+        self.Bind(wx.EVT_ENTER_WINDOW, self.OnEnterWindow)
+        self.Bind(wx.EVT_LEAVE_WINDOW, self.OnLeaveWindow)
+
         self.SetSizer(self.sizer)
+
+    def GetValue(self):
+        value = self.input.GetValue()
+        if type(self.input) == wx.adv.TimePickerCtrl:
+            value = datetime.time(value.GetHour(), value.GetMinute(), value.GetSecond())
+        return value
+
+    def OnEnterWindow(self, event):
+        self.SetBackgroundColour(wx.Colour(232, 236, 234))
+        self.Refresh()
+
+    def OnLeaveWindow(self, event):
+        if self.HitTest(event.Position) == wx.HT_WINDOW_OUTSIDE:
+            self.SetBackgroundColour(wx.Colour(242, 246, 244))
+            self.Refresh()
 
     def CreateLabel(self, labelText: str, tooltipText: str = None):
         tooltipText = tooltipText or labelText
         label = wx.StaticText(self, wx.ID_ANY, labelText, wx.DefaultPosition,
                               wx.DefaultSize, 0)
-        label.SetToolTip(tooltipText)
+        # label.SetToolTip(tooltipText)
         label.SetFont(self.CreateFont(wx.FONTFAMILY_DEFAULT))
         label.SetForegroundColour(wx.Colour(54, 54, 54))
         return label
@@ -77,9 +95,3 @@ class WxPreferencesInput(wx.Panel):
     def CreateFont(self, fontFamily):
         return wx.Font(wx.NORMAL_FONT.GetPointSize(), fontFamily,
                        wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, wx.EmptyString)
-
-    def GetValue(self):
-        value = self.input.GetValue()
-        if type(self.input) == wx.adv.TimePickerCtrl:
-            value = datetime.time(value.GetHour(), value.GetMinute(), value.GetSecond())
-        return value

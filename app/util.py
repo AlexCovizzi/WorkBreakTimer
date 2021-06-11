@@ -4,8 +4,9 @@ import sys
 import os
 
 
-def parse_time(s):
-    time_struct = time.strptime(str(s), '%H:%M')
+def parse_time(s: str):
+    fmt = '%H:%M:%S' if len(s.split(':')) > 2 else '%H:%M'
+    time_struct = time.strptime(str(s), fmt)
     return datetime.time(time_struct.tm_hour, time_struct.tm_min)
 
 
